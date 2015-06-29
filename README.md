@@ -38,15 +38,11 @@ based on disk space available for a Dedibox SC gen2, i.e. 1x500 Go SSHD.
 
 ### Server OS type
 
-![dedibox os_type](dedibox_os_type.png){: style="margin: 0px auto;
-display: block; max-width: 90%; border: 2px solid gray;
-border-radius: 10px 10px"}
+![dedibox os_type](dedibox_os_type.png)
 
 ### Distribution
 
-![dedibox os_choice](dedibox_os_choice.png){: style="margin: 0px auto;
-display: block; max-width: 90%; border: 2px solid gray;
-border-radius: 10px 10px"}
+![dedibox os_choice](dedibox_os_choice.png)
 
 ### Online.net installation console screenshot
 
@@ -54,9 +50,7 @@ _Online.net_ installation partitioning is a little buggy : if free space is left
 swap partition will get all remaining space. That's why I created an
 fourth primary partition to handle properly available free space.
 
-![dedibox partitioning](dedibox_partitioning.png){: style="margin: 0px auto;
-display: block; max-width: 90%; border: 2px solid gray;
-border-radius: 10px 10px"}
+![dedibox partitioning](dedibox_partitioning.png)
 
 ## Prepare encryption
 
