@@ -175,19 +175,19 @@ export LC_ALL=C.UTF-8
 
 ~~~~~
 cat <<EOF> /etc/apt/sources.list
-deb http://ftp.fr.debian.org/debian/ jessie main contrib non-free
-deb-src http://ftp.fr.debian.org/debian/ jessie main contrib non-free
+deb http://httpredir.debian.org/debian/ jessie main contrib non-free
+deb-src http://httpredir.debian.org/debian/ jessie main contrib non-free
 
 deb http://security.debian.org/ jessie/updates main contrib non-free
 deb-src http://security.debian.org/ jessie/updates main contrib non-free
 
 # jessie-updates, previously known as 'volatile'
-deb http://ftp.fr.debian.org/debian/ jessie-updates main contrib non-free
-deb-src http://ftp.fr.debian.org/debian/ jessie-updates main contrib non-free
+deb http://httpredir.debian.org/debian/ jessie-updates main contrib non-free
+deb-src http://httpredir.debian.org/debian/ jessie-updates main contrib non-free
 
 # jessie-backports, previously on backports.debian.org
-deb http://ftp.fr.debian.org/debian/ jessie-backports main contrib non-free
-deb-src http://ftp.fr.debian.org/debian/ jessie-backports main contrib non-free
+deb http://httpredir.debian.org/debian/ jessie-backports main contrib non-free
+deb-src http://httpredir.debian.org/debian/ jessie-backports main contrib non-free
 EOF
 cat <<EOF> /etc/apt/apt.conf.d/30disable-recommends-and-suggests
 APT::Install-Recommends "0";
