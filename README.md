@@ -227,6 +227,9 @@ sda3_crypt UUID=`cryptsetup luksUUID /dev/sda3` none luks
 # encrypted /data
 sda4_crypt UUID=`cryptsetup luksUUID /dev/sda4` none luks
 EOF
+# Force cryptsetup
+echo 'export CRYPTSETUP=y' \
+  > /usr/share/initramfs-tools/conf-hooks.d/forcecryptsetup
 ~~~~~
 
 ### Create fstab
