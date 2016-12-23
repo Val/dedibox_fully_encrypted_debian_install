@@ -1,7 +1,7 @@
 <!-- -*- mode:markdown;tab-width:2;indent-tabs-mode:nil;coding:utf-8 -*-
      vim: ft=markdown syn=markdown fileencoding=utf-8 sw=2 ts=2 ai eol et si
      README.md: Dedibox Fully Encrypted Debian installation
-     (c) 2011-15 Laurent Vallar <val@zbla.net>, WTFPL license v2 see below.
+     (c) 2011-16 Laurent Vallar <val@zbla.net>, WTFPL license v2 see below.
 
      This program is free software. It comes without any warranty, to
      the extent permitted by applicable law. You can redistribute it
@@ -25,14 +25,14 @@
 ## Final objectives
 
 All partition but _/boot_ will be encrypted. Current partition layout is
-based on disk space available for a Dedibox SC gen2, i.e. 1x500 Go SSHD.
+based on disk space available for a Dedibox SC SATA 2016, i.e. 1x500 Go SSHD.
 
-| Type     | Filesystem | Mount point  | Size      | After encryption        |
-|:---------|:-----------|:-------------|----------:|:------------------------|
-| Primary  | Ext4       | /boot        |    524 Mo | /boot (_not encrypted_) |
-| Primary  | _Swap_     | _none_       |   2064 Mo | _Swap_ (_encrypted_)    |
-| Primary  | Ext4       | /            |   5240 Mo | / (_encrypted_)         |
-| Primary  | Ext4       | /data        | 469108 Mo | /data (_encrypted_)     |
+| Type     | Initial mount point | Size      | After install | encrypted |
+|:---------|:--------------------|----------:|:--------------|-----------|
+| Primary  | /boot (Ext4)        |    640 Mo | /boot (Ext4)  | no        |
+| Primary  | / (Ext4)            |   4532 Mo | _Swap_        | **yes**   |
+| Primary  | _Swap_              |  41984 Mo | / (Ext4)      | **yes**   |
+| Primary  | /data (Ext4)        | 906710 Mo | /data (Ext4)  | **yes**   |
 
 ## Online.net classical install
 
@@ -52,33 +52,28 @@ fourth primary partition to handle properly available free space.
 
 ![dedibox partitioning](dedibox_partitioning.png)
 
+After that you will be prompted for accounts credentials, **don't forget to
+upload your SSH public key**: see below.
+
+### Generate a dropbear compatible SSH key pair
+
+As **dropbear** does not support ED25519 we have to build an RSA key pair.
+
+~~~~
+key_date=$(date +%Y-%m-%d)
+key_name=${USER}@$(hostname)_${key_date}
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa_${key_name} -C ${key_name}
+~~~~
+
 ## Prepare encryption
 
-### Log in as <configured_user> and set SSH authorized key
-
-<!--
-# cat ~/.ssh/id_rsa.pub | ssh root@<your_dedibox_IP_or_FQDN> \
-#   -o StrictHostKeyChecking=no -o PasswordAuthentication=yes \
-#   "( install -m 700 -d /root/.ssh && cat >> /root/.ssh/authorized_keys )"
-  -->
+### Store SSH host keys
 
 ~~~~~
 ssh-keyscan -H <your_dedibox_IP_or_FQDN> >> ~/.ssh/known_hosts
-ssh-copy-id <user>@<your_dedibox_IP_or_FQDN>
 ~~~~~
 
-### Copy SSH authorized key to root account and continue as root
-
-~~~~~
-su -
-cp -a ~<user>/.ssh /root
-chown root.root -R /root/.ssh
-# Change passwords
-passwd <user>
-passwd
-~~~~~
-
-### Cleanup Online.net installation & shutdown all services
+### Log in as root and cleanup Online.net installation & shutdown all services
 
 ~~~~~
 apt-get remove -y --purge bind9 bind9utils
@@ -105,7 +100,7 @@ sfdisk -d /dev/sda > sda.sfdisk
 
 
 ~~~~
-perl -pe 's|^(.*, Id=)8[23]$|\1da|g' -i sda.sfdisk
+sed -e 's|^\(.*, Id=\)8[23]$|\1da|g' -i sda.sfdisk
 ~~~~
 
 ### Apply partition types modification
@@ -113,12 +108,16 @@ perl -pe 's|^(.*, Id=)8[23]$|\1da|g' -i sda.sfdisk
 ~~~~~
 sfdisk --no-reread --force /dev/sda < sda.sfdisk
 rm -f sda.sfdisk
+apt-get install -y parted
+partprobe
 ~~~~~
 
 ### Encrypt future root and use /data mount point temporarily
 
 ~~~~~
-/bin/echo -e "console-setup\tconsole-setup/charmap47\tselect\tUTF-8" |\
+/bin/echo -e "console-setup\tconsole-setup/charmap47\tselect\tUTF-8\n\
+console-setup\tconsole-setup/codesetcode\tstring\tguess\n\
+console-setup\tconsole-setup/codeset47\tselect\tGuess optimal character set" |\
 debconf-set-selections
 apt-get install -y cryptsetup
 cryptsetup luksFormat /dev/sda3
@@ -134,7 +133,7 @@ mount /dev/mapper/sda3_crypt /data
 
 ~~~~~
 debian_mirror=http://http.debian.net/debian
-debian_codename=jessie # change with target distribution
+debian_codename=stretch # change with target distribution
 debootstrap_base_url=${debian_mirror}/pool/main/d/debootstrap
 debootstrap_version=\
 $(wget ${debootstrap_base_url} -q -O - |\
@@ -175,19 +174,19 @@ export LC_ALL=C.UTF-8
 
 ~~~~~
 cat <<EOF> /etc/apt/sources.list
-deb http://httpredir.debian.org/debian/ jessie main contrib non-free
-deb-src http://httpredir.debian.org/debian/ jessie main contrib non-free
+deb http://httpredir.debian.org/debian/ stretch main contrib non-free
+deb-src http://httpredir.debian.org/debian/ stretch main contrib non-free
 
-deb http://security.debian.org/ jessie/updates main contrib non-free
-deb-src http://security.debian.org/ jessie/updates main contrib non-free
+#deb http://security.debian.org/ stretch/updates main contrib non-free
+#deb-src http://security.debian.org/ stretch/updates main contrib non-free
 
-# jessie-updates, previously known as 'volatile'
-deb http://httpredir.debian.org/debian/ jessie-updates main contrib non-free
-deb-src http://httpredir.debian.org/debian/ jessie-updates main contrib non-free
+# stretch-updates, previously known as 'volatile'
+#deb http://httpredir.debian.org/debian/ stretch-updates main contrib non-free
+#deb-src http://httpredir.debian.org/debian/ stretch-updates main contrib non-free
 
-# jessie-backports, previously on backports.debian.org
-deb http://httpredir.debian.org/debian/ jessie-backports main contrib non-free
-deb-src http://httpredir.debian.org/debian/ jessie-backports main contrib non-free
+# stretch-backports, previously on backports.debian.org
+#deb http://httpredir.debian.org/debian/ stretch-backports main contrib non-free
+#deb-src http://httpredir.debian.org/debian/ stretch-backports main contrib non-free
 EOF
 cat <<EOF> /etc/apt/apt.conf.d/30disable-recommends-and-suggests
 APT::Install-Recommends "0";
@@ -201,13 +200,12 @@ EOF
 ### Install cryptsetup inside new root
 
 ~~~~~
-/bin/echo -e "console-setup\tconsole-setup/codeset47\tselect\t"\
-"# Latin1 and Latin5 - western Europe and Turkic languages\n"\
-"console-setup\tconsole-setup/codesetcode\tstring\tLat15\n"\
-"console-setup\tconsole-setup/charmap47\tselect\tUTF-8" |\
+/bin/echo -e "console-setup\tconsole-setup/charmap47\tselect\tUTF-8\n\
+console-setup\tconsole-setup/codesetcode\tstring\tguess\n\
+console-setup\tconsole-setup/codeset47\tselect\tGuess optimal character set" |\
 debconf-set-selections
 apt-get update
-apt-get -y install cryptsetup
+apt-get -y install cryptsetup console-setup
 apt-get -y autoremove
 apt-get clean
 ~~~~~
@@ -228,8 +226,8 @@ sda3_crypt UUID=`cryptsetup luksUUID /dev/sda3` none luks
 sda4_crypt UUID=`cryptsetup luksUUID /dev/sda4` none luks
 EOF
 # Force cryptsetup
-echo 'export CRYPTSETUP=y' \
-  > /usr/share/initramfs-tools/conf-hooks.d/forcecryptsetup
+sed -e 's/^\(#\)\?\(CRYPTSETUP=\).*$/\2y/g' \
+  -i /etc/cryptsetup-initramfs/conf-hook
 ~~~~~
 
 ### Create fstab
@@ -268,10 +266,12 @@ cat <<EOF> /etc/network/interfaces.d/00_loopback
 auto lo
 iface lo inet loopback
 EOF
+id_net_name_path=\
+$(udevadm info -e | grep -A 9 ^P.*/net/ |grep ID_NET_NAME_PATH |cut -f2 -d=)
 cat <<EOF> /etc/network/interfaces.d/01_primary
 # The primary network interface
-auto eth0
-iface eth0 inet dhcp
+auto ${id_net_name_path}
+iface ${id_net_name_path} inet dhcp
 EOF
 ~~~~~
 
@@ -284,27 +284,28 @@ grub_disk=$(ls /dev/disk/by-id/ |egrep -v '(part[0-9]+|crypt)$' |grep ata)
 /bin/echo -e \
 "grub-pc\tgrub-pc/install_devices\tmultiselect\t/dev/disk/by-id/${grub_disk}" |\
 debconf-set-selections
-apt-get install -y linux-image-amd64 grub-pc
+apt-get install -y linux-image-amd64 grub-pc busybox kbd
 update-grub
 grub-install /dev/sda
 ~~~~~
 
-### Make previous root partition a little unregognizable (optional)
-
-~~~~~
-dd if=/dev/urandom of=/dev/sda2 bs=1M count=10
-~~~~~
-
 ### Configure Time Zone (optional)
-
 ~~~~~
-/bin/echo -e "tzdata\ttzdata/Areas\tselect\tEurope\n\
-tzdata\ttzdata/Zones/Europe\tselect\tParis\n\
-tzdata\ttzdata/Zones/Etc\tselect\tUTC\n" |\
+/bin/echo -e \
+"tzdata\ttzdata/Areas\tselect\tEtc\n"\
+"tzdata\ttzdata/Zones/Etc\tselect\tUTC\n" |\
+debconf-set-selections
+echo "Etc/UTC" > /etc/timezone
+dpkg-reconfigure -f noninteractive tzdata
+~~~~~
+<!--
+/bin/echo -e \
+"tzdata\ttzdata/Areas\tselect\tEurope\n"\
+"tzdata\ttzdata/Zones/Europe\tselect\tParis\n" |\
 debconf-set-selections
 echo "Europe/Paris" > /etc/timezone
 dpkg-reconfigure -f noninteractive tzdata
-~~~~~
+  -->
 
 ### Configure Locale (optional)
 
@@ -324,65 +325,49 @@ apt-get install -y locales localepurge
 apt-get install -y openssh-server
 ~~~~~
 
-### Install dropbear
-
-~~~~~
-apt-get install -y dropbear busybox
-~~~~~
-
 ### Copy your SSH public key to initramfs root account
 
 ~~~~
-rm -rf /etc/initramfs-tools/root/.ssh/*
-cp -a /root/.ssh/authorized_keys /etc/initramfs-tools/root/.ssh
+install -o root -g root -m 755 -d /etc/dropbear-initramfs
+cp -af /root/.ssh/authorized_keys /etc/dropbear-initramfs
 ~~~~
+
+### Install dropbear
+
+~~~~~
+apt-get install -y dropbear
+~~~~~
 
 ### Make SSH keys dropbear's ones
 
 ~~~~~
-rm -f /etc/initramfs-tools/etc/dropbear/*
-/usr/lib/dropbear/dropbearconvert openssh dropbear \
-  /etc/ssh/ssh_host_rsa_key  \
-  /etc/initramfs-tools/etc/dropbear/dropbear_rsa_host_key
-/usr/lib/dropbear/dropbearconvert openssh dropbear \
-  /etc/ssh/ssh_host_dsa_key \
-  /etc/initramfs-tools/etc/dropbear/dropbear_dss_host_key
-/usr/lib/dropbear/dropbearconvert openssh dropbear \
-  /etc/ssh/ssh_host_ecdsa_key \
-  /etc/initramfs-tools/etc/dropbear/dropbear_ecdsa_host_key
-rm -f /etc/dropbear/dropbear_{rsa,dss,ecdsa}_host_key
-cp -a /etc/initramfs-tools/etc/dropbear/dropbear_{rsa,dss,ecdsa}_host_key \
-  /etc/dropbear
+rm -f /etc/dropbear-initramfs/dropbear_*_host_key
+for hash in rsa ecdsa; do \
+  /usr/lib/dropbear/dropbearconvert openssh dropbear \
+  /etc/ssh/ssh_host_${hash}_key  \
+  /etc/dropbear-initramfs/dropbear_${hash}_host_key ; done
+rm -f /etc/dropbear/dropbear_*_host_key
+cp -a /etc/dropbear-initramfs/dropbear_*_host_key /etc/dropbear
 ~~~~~
-  
+
 ### Change SSH listen port if needed (optional)
 
 ~~~~
 ssh_port=<your SSH listen port>
-# Ensure package update will not lost anything
-dpkg-divert --add --rename --divert \
-  /usr/lib/dropbear/initramfs-tools_script_init-premount_dropbear.real \
-  /usr/share/initramfs-tools/scripts/init-premount/dropbear
-# Add optional listen port
-perl -pe 's|^(/sbin/dropbear).*$|\1 -s -p '${ssh_port}'|' \
-  /usr/lib/dropbear/initramfs-tools_script_init-premount_dropbear.real \
-  > /usr/share/initramfs-tools/scripts/init-premount/dropbear
-# Make script executable
-chmod 700 /usr/share/initramfs-tools/scripts/init-premount/dropbear
-# Change SSH listen port
-perl -pe 's/^(Port) \d+$/\1 '${ssh_port}'/g' -i /etc/ssh/sshd_config
+# Change dropbear SSH listen port
+sed -e "s/^\(#\)\?\(DROPBEAR_OPTIONS=\).*$/\2'-p ${ssh_port}'/g" \
+  -e 's|^\(#\)\?\(\(IFDOWN=\).*\)$|#\2\n\3none|' \
+  -i /etc/dropbear-initramfs/config
+# Change OpenSSH listen port
+sed -e "s|^\(Port\) .*$|\1 ${ssh_port}|" -i /etc/ssh/sshd_config
 ~~~~
 
 ### Configure initramfs
 
 ~~~~~
 # Add eth0 as listen interface
-perl -pe 's/^(DEVICE=)$/\1eth0/' -i /etc/initramfs-tools/initramfs.conf
-# Add dropbear on boot
-cat <<EOF>> /etc/initramfs-tools/initramfs.conf
-# Launch dropbear at boot time
-DROPBEAR=y
-EOF
+sed -e "s|^\(DEVICE=\).*$|\1${id_net_name_path}|" \
+  -i /etc/initramfs-tools/initramfs.conf
 ~~~~~
 
 ### Install `start_dm_crypt` boot time helper script
@@ -413,7 +398,7 @@ EOS
 
   sep; echo 'unlocking / & exit'
   /scripts/local-top/cryptroot
-  
+
   sep; read -p 'quit & continue boot? (Y/n)' resp
   if [ "\$resp" == "Y" -o "\$resp" == "y" -o "\$resp" == "" ]
   then
@@ -455,26 +440,13 @@ esac
 
 copy_exec /etc/initramfs-tools/start_dm_crypt /sbin/start_dm_crypt
 
-/usr/lib/dropbear/dropbearconvert openssh dropbear \\
-  /etc/ssh/ssh_host_rsa_key \\
-  /etc/initramfs-tools/etc/dropbear/dropbear_rsa_host_key
-
-/usr/lib/dropbear/dropbearconvert openssh dropbear \\
-  /etc/ssh/ssh_host_dsa_key \\
-  /etc/initramfs-tools/etc/dropbear/dropbear_dss_host_key
-
-/usr/lib/dropbear/dropbearconvert openssh dropbear \\
-  /etc/ssh/ssh_host_ecdsa_key \\
-  /etc/initramfs-tools/etc/dropbear/dropbear_ecdsa_host_key
-
+for hash in rsa ecdsa; do
+  /usr/lib/dropbear/dropbearconvert openssh dropbear \\
+    /etc/ssh/ssh_host_\${hash}_key  \\
+    /etc/dropbear-initramfs/dropbear_\${hash}_host_key
+done
 EOF
 chmod a+x /etc/initramfs-tools/hooks/install_start_dm_crypt
-~~~~
-
-### Update initramfs
-
-~~~~
-update-initramfs -u -kall
 ~~~~
 
 ### Install some usefull stuff (optional)
@@ -485,11 +457,52 @@ sed -e '/^#if ! shopt -oq posix; then/,/^#fi/ s/^#\(.*\)/\1/g' \
   -i /etc/bash.bashrc
 ~~~~
 
-### Sync disk & exit
+### Force network module in initramfs
+
+~~~~~
+exit # return back to primary system
+echo $(while read m _; do \
+  /sbin/modinfo -F filename "$m"; done </proc/modules |sed -nr \
+  "s@^/lib/modules/`uname -r`/kernel/drivers/net(/.*)?/([^/]+)\.ko\$@\2@p") \
+  >> /data/etc/initramfs-tools/modules
+chroot /data
+export TERM=xterm-color
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+~~~~~
+
+### Update initramfs & sync disk
 
 ~~~~
+update-initramfs -u -kall
 sync
-exit
+~~~~
+
+### Verify initramfs
+
+~~~~
+exit # return back to primary system
+cd /dev/shm
+mkdir initrd
+apt-get install -y zutils
+zcat /data/boot/initrd.img-* > initrd.cpio
+cd initrd
+cpio -vid < ../initrd.cpio
+cat root*/.ssh/authorized_keys
+cat sbin/start_dm_crypt
+cd
+rm -rf /dev/shm/initrd.cpio /dev/shm/initrd
+~~~~
+
+### Make previous root partition a little unregognizable (optional)
+
+~~~~~
+dd if=/dev/urandom of=/dev/sda2 bs=1M count=10
+~~~~~
+
+### exit
+
+~~~~
 exit
 ~~~~
 
