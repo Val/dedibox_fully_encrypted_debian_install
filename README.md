@@ -175,19 +175,19 @@ export LC_ALL=C.UTF-8
 
 ~~~~~
 cat <<EOF> /etc/apt/sources.list
-deb http://httpredir.debian.org/debian/ stretch main contrib non-free
-deb-src http://httpredir.debian.org/debian/ stretch main contrib non-free
+deb http://deb.debian.org/debian/ stretch main contrib non-free
+#deb-src http://deb.debian.org/debian/ stretch main contrib non-free
 
 #deb http://security.debian.org/ stretch/updates main contrib non-free
 #deb-src http://security.debian.org/ stretch/updates main contrib non-free
 
 # stretch-updates, previously known as 'volatile'
-#deb http://httpredir.debian.org/debian/ stretch-updates main contrib non-free
-#deb-src http://httpredir.debian.org/debian/ stretch-updates main contrib non-free
+#deb http://deb.debian.org/debian/ stretch-updates main contrib non-free
+#deb-src http://deb.debian.org/debian/ stretch-updates main contrib non-free
 
 # stretch-backports, previously on backports.debian.org
-#deb http://httpredir.debian.org/debian/ stretch-backports main contrib non-free
-#deb-src http://httpredir.debian.org/debian/ stretch-backports main contrib non-free
+#deb http://deb.debian.org/debian/ stretch-backports main contrib non-free
+#deb-src http://deb.debian.org/debian/ stretch-backports main contrib non-free
 EOF
 cat <<EOF> /etc/apt/apt.conf.d/30disable-recommends-and-suggests
 APT::Install-Recommends "0";
