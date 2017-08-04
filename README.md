@@ -78,8 +78,9 @@ ssh-keyscan -H <your_dedibox_IP_or_FQDN> >> ~/.ssh/known_hosts
 ~~~~~
 apt-get remove -y --purge bind9 bind9utils
 rm -rf /var/cache/bind
-for daemon in exim4 openntpd acpid udev atd cron rsyslog dbus; do
+for daemon in openntpd udev cron rsyslog systemd-journald dbus getty@tty1; do
   systemctl stop $daemon
+  systemctl disable $daemon
 done
 ~~~~~
 
