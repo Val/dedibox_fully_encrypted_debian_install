@@ -360,7 +360,7 @@ sed -e "s/^\(#\)\?\(DROPBEAR_OPTIONS=\).*$/\2'-p ${ssh_port}'/g" \
   -e 's|^\(#\)\?\(\(IFDOWN=\).*\)$|#\2\n\3none|' \
   -i /etc/dropbear-initramfs/config
 # Change OpenSSH listen port
-sed -e "s|^\(Port\) .*$|\1 ${ssh_port}|" -i /etc/ssh/sshd_config
+sed -e "s|^#*\(Port\) .*$|\1 ${ssh_port}|" -i /etc/ssh/sshd_config
 ~~~~
 
 ### Configure initramfs
