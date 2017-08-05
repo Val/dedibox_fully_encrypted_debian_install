@@ -268,7 +268,7 @@ auto lo
 iface lo inet loopback
 EOF
 id_net_name_path=\
-$(udevadm info -e | grep -A 9 ^P.*/net/ |grep ID_NET_NAME_PATH |cut -f2 -d=)
+$(udevadm info -e | grep -A 9 ^P.*/net/ |grep -m1 ID_NET_NAME_PATH |cut -f2 -d=)
 cat <<EOF> /etc/network/interfaces.d/01_primary
 # The primary network interface
 auto ${id_net_name_path}
