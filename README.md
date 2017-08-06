@@ -442,9 +442,13 @@ esac
 copy_exec /etc/initramfs-tools/start_dm_crypt /sbin/start_dm_crypt
 
 for hash in rsa ecdsa; do
-  /usr/lib/dropbear/dropbearconvert openssh dropbear \\
-    /etc/ssh/ssh_host_\${hash}_key  \\
-    /etc/dropbear-initramfs/dropbear_\${hash}_host_key
+  if [ -f /etc/ssh/ssh_host_\${hash}_key ]; then
+    /usr/lib/dropbear/dropbearconvert openssh dropbear \\
+      /etc/ssh/ssh_host_\${hash}_key  \\
+      /etc/dropbear-initramfs/dropbear_\${hash}_host_key
+  else
+    echo "WARN: /etc/ssh/ssh_host_\${hash}_key not found, skipped" >&2
+  fi
 done
 EOF
 chmod a+x /etc/initramfs-tools/hooks/install_start_dm_crypt
