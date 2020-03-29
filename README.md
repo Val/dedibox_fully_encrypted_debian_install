@@ -344,6 +344,8 @@ apt-get install -y dropbear
 ~~~~~
 rm -f /etc/dropbear-initramfs/dropbear_*_host_key
 for hash in rsa ecdsa; do \
+  # Convert private key to PEM as dropbear do not support the default format
+  ssh-keygen -m PEM -p -N "" -f /etc/ssh/ssh_host_${hash}_key \
   /usr/lib/dropbear/dropbearconvert openssh dropbear \
   /etc/ssh/ssh_host_${hash}_key  \
   /etc/dropbear-initramfs/dropbear_${hash}_host_key ; done
