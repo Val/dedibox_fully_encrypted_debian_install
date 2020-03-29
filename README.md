@@ -456,6 +456,13 @@ EOF
 chmod a+x /etc/initramfs-tools/hooks/install_start_dm_crypt
 ~~~~
 
+### Add `start_dm_crypt` script as default command
+
+~~~~
+sed -e "s/^\(#\)\?\(DROPBEAR_OPTIONS=\)'\?\([^']*\)'\?.*$/\2'\3 -c \/sbin\/start_dm_crypt'/g" \
+  -i /etc/dropbear-initramfs/config
+~~~~
+
 ### Install some usefull stuff (optional)
 
 ~~~~
