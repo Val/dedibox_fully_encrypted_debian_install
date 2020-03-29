@@ -133,8 +133,9 @@ mount /dev/mapper/sda3_crypt /data
 ### Do a fresh install on new encrypted root
 
 ~~~~~
-debian_mirror=http://http.debian.net/debian
-debian_codename=stretch # change with target distribution
+#debian_mirror=http://http.debian.net/debian
+debian_mirror=http://mirrors.online.net/debian
+debian_codename=buster # change with target distribution
 debootstrap_base_url=${debian_mirror}/pool/main/d/debootstrap
 debootstrap_version=\
 $(wget ${debootstrap_base_url} -q -O - |\
@@ -175,19 +176,19 @@ export LC_ALL=C.UTF-8
 
 ~~~~~
 cat <<EOF> /etc/apt/sources.list
-deb http://deb.debian.org/debian/ stretch main contrib non-free
-#deb-src http://deb.debian.org/debian/ stretch main contrib non-free
+deb http://mirrors.online.net/debian/ buster main contrib non-free
+#deb-src http://mirrors.online.net/debian/ buster main contrib non-free
 
-#deb http://security.debian.org/ stretch/updates main contrib non-free
-#deb-src http://security.debian.org/ stretch/updates main contrib non-free
+#deb http://security.debian.org/ buster/updates main contrib non-free
+#deb-src http://security.debian.org/ buster/updates main contrib non-free
 
-# stretch-updates, previously known as 'volatile'
-#deb http://deb.debian.org/debian/ stretch-updates main contrib non-free
-#deb-src http://deb.debian.org/debian/ stretch-updates main contrib non-free
+# buster-updates, previously known as 'volatile'
+#deb http://deb.debian.org/debian/ buster-updates main contrib non-free
+#deb-src http://deb.debian.org/debian/ buster-updates main contrib non-free
 
-# stretch-backports, previously on backports.debian.org
-#deb http://deb.debian.org/debian/ stretch-backports main contrib non-free
-#deb-src http://deb.debian.org/debian/ stretch-backports main contrib non-free
+# buster-backports, previously on backports.debian.org
+#deb http://deb.debian.org/debian/ buster-backports main contrib non-free
+#deb-src http://deb.debian.org/debian/ buster-backports main contrib non-free
 EOF
 cat <<EOF> /etc/apt/apt.conf.d/30disable-recommends-and-suggests
 APT::Install-Recommends "0";
@@ -344,6 +345,8 @@ apt-get install -y dropbear
 ~~~~~
 rm -f /etc/dropbear-initramfs/dropbear_*_host_key
 for hash in rsa ecdsa; do \
+  # Convert private key to PEM as dropbear do not support the default format
+  ssh-keygen -m PEM -p -N "" -f /etc/ssh/ssh_host_${hash}_key \
   /usr/lib/dropbear/dropbearconvert openssh dropbear \
   /etc/ssh/ssh_host_${hash}_key  \
   /etc/dropbear-initramfs/dropbear_${hash}_host_key ; done
@@ -452,6 +455,13 @@ for hash in rsa ecdsa; do
 done
 EOF
 chmod a+x /etc/initramfs-tools/hooks/install_start_dm_crypt
+~~~~
+
+### Add `start_dm_crypt` script as default command
+
+~~~~
+sed -e "s/^\(#\)\?\(DROPBEAR_OPTIONS=\)'\?\([^']*\)'\?.*$/\2'\3 -c \/sbin\/start_dm_crypt'/g" \
+  -i /etc/dropbear-initramfs/config
 ~~~~
 
 ### Install some usefull stuff (optional)
