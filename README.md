@@ -133,8 +133,9 @@ mount /dev/mapper/sda3_crypt /data
 ### Do a fresh install on new encrypted root
 
 ~~~~~
-debian_mirror=http://http.debian.net/debian
-debian_codename=stretch # change with target distribution
+#debian_mirror=http://http.debian.net/debian
+debian_mirror=http://mirrors.online.net/debian
+debian_codename=buster # change with target distribution
 debootstrap_base_url=${debian_mirror}/pool/main/d/debootstrap
 debootstrap_version=\
 $(wget ${debootstrap_base_url} -q -O - |\
@@ -175,19 +176,19 @@ export LC_ALL=C.UTF-8
 
 ~~~~~
 cat <<EOF> /etc/apt/sources.list
-deb http://deb.debian.org/debian/ stretch main contrib non-free
-#deb-src http://deb.debian.org/debian/ stretch main contrib non-free
+deb http://mirrors.online.net/debian/ buster main contrib non-free
+#deb-src http://mirrors.online.net/debian/ buster main contrib non-free
 
-#deb http://security.debian.org/ stretch/updates main contrib non-free
-#deb-src http://security.debian.org/ stretch/updates main contrib non-free
+#deb http://security.debian.org/ buster/updates main contrib non-free
+#deb-src http://security.debian.org/ buster/updates main contrib non-free
 
-# stretch-updates, previously known as 'volatile'
-#deb http://deb.debian.org/debian/ stretch-updates main contrib non-free
-#deb-src http://deb.debian.org/debian/ stretch-updates main contrib non-free
+# buster-updates, previously known as 'volatile'
+#deb http://deb.debian.org/debian/ buster-updates main contrib non-free
+#deb-src http://deb.debian.org/debian/ buster-updates main contrib non-free
 
-# stretch-backports, previously on backports.debian.org
-#deb http://deb.debian.org/debian/ stretch-backports main contrib non-free
-#deb-src http://deb.debian.org/debian/ stretch-backports main contrib non-free
+# buster-backports, previously on backports.debian.org
+#deb http://deb.debian.org/debian/ buster-backports main contrib non-free
+#deb-src http://deb.debian.org/debian/ buster-backports main contrib non-free
 EOF
 cat <<EOF> /etc/apt/apt.conf.d/30disable-recommends-and-suggests
 APT::Install-Recommends "0";
